@@ -74,7 +74,6 @@ class PostFormTests(TestCase):
         cls.notauthor = Client()
         cls.notauthor.force_login(cls.not_author)
 
-
     @classmethod
     def tearDownClass(cls):
         super().tearDownClass()
@@ -130,7 +129,6 @@ class PostFormTests(TestCase):
             f"{UPLOAD_TO}{form_data['image']}"
         )
         self.assertRedirects(response, self.POST_DETAIL_URL)
-
 
     def test_guest_create_post(self):
         Post.objects.all().delete()

@@ -35,7 +35,8 @@ def profile(request, username):
         'follow': (request.user.is_authenticated
                    and request.user.username != username
                    and Follow.objects.filter(
-                       author=author,user=request.user).exists()),})
+                       author=author, user=request.user).exists()), })
+
 
 def post_detail(request, post_id):
     return render(request, 'posts/post_detail.html', {
@@ -103,6 +104,7 @@ def profile_follow(request, username):
             Follow.objects.filter(user=request.user, author=author).exists()):
         Follow.objects.create(user=request.user, author=author)
     return redirect('posts:profile', username=username)
+
 
 @login_required
 def profile_unfollow(request, username):

@@ -6,6 +6,7 @@ from django.contrib.auth import get_user_model
 User = get_user_model()
 NUM_OF_LET = 20
 
+
 class Group(models.Model):
     title = models.CharField(max_length=200, verbose_name='Название группы')
     slug = models.SlugField(

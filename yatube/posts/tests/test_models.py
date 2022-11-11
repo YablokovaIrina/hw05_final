@@ -20,13 +20,13 @@ class PostModelTest(TestCase):
             group=cls.group,
         )
         cls.comment = Comment.objects.create(
-            text = 'Тестовый коммент',
-            post = cls.post,
-            author = cls.user,
+            text='Тестовый коммент',
+            post=cls.post,
+            author=cls.user,
         )
         cls.follow = Follow.objects.create(
-            user = cls.user2,
-            author = cls.user,
+            user=cls.user2,
+            author=cls.user,
         )
 
     def test_models_have_correct_object_names(self):
