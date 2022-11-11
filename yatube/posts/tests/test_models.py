@@ -1,6 +1,6 @@
 from django.test import TestCase
 
-from ..models import Group, Post, User
+from ..models import Group, Post, Comment, Follow, NUM_OF_LET, User
 
 
 class PostModelTest(TestCase):
@@ -8,6 +8,7 @@ class PostModelTest(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.user = User.objects.create_user(username='auth')
+        cls.user2 = User.objects.create_user(username='user2')
         cls.group = Group.objects.create(
             title='Тестовая группа',
             slug='Тестовый слаг',
@@ -18,7 +19,18 @@ class PostModelTest(TestCase):
             text='Тестовый пост',
             group=cls.group,
         )
+        cls.comment = Comment.objects.create(
+            text = 'Тестовый коммент',
+            post = cls.post,
+            author = cls.user,
+        )
+        cls.follow = Follow.objects.create(
+            user = cls.user2,
+            author = cls.user,
+        )
 
     def test_models_have_correct_object_names(self):
-        self.assertEqual(self.post.text[:20], str(self.post))
+        self.assertEqual(self.post.text[:NUM_OF_LET], str(self.post))
         self.assertEqual(self.group.title, str(self.group))
+        self.assertEqual(self.comment.text[:NUM_OF_LET], str(self.comment))
+        self.assertEqual(self.follow.phrase, str(self.follow))

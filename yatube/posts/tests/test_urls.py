@@ -1,6 +1,7 @@
 from django.core.cache import cache
 from django.test import TestCase, Client
 from django.urls import reverse
+
 from posts.models import Post, Group, User
 
 USERNAME = 'UserAuthor'
@@ -12,16 +13,14 @@ POST_TEXT = 'Я все успею до жесткого дедлайна'
 
 INDEX_URL = reverse('posts:index')
 POST_CREATE_URL = reverse('posts:post_create')
-PROFILE_URL = reverse('posts:profile', kwargs={'username': USERNAME})
-GROUP_LIST_URL = reverse('posts:group_list', kwargs={'slug': GROUP_SLUG})
+PROFILE_URL = reverse('posts:profile', args=[USERNAME])
+GROUP_LIST_URL = reverse('posts:group_list', args=[GROUP_SLUG])
 LOGIN_URL = reverse('users:login')
 FOLLOW_INDEX_URL = reverse('posts:follow_index')
 PROFILE_FOLLOW_URL = reverse(
-    'posts:profile_follow', kwargs={'username': USERNAME}
-)
+    'posts:profile_follow', args=[USERNAME])
 PROFILE_UNFOLLOW_URL = reverse(
-    'posts:profile_unfollow', kwargs={'username': USERNAME}
-)
+    'posts:profile_unfollow', args=[USERNAME])
 
 POST_CREATE_REDIRECT = f'{LOGIN_URL}?next={POST_CREATE_URL}'
 FOLLOW_REDIRECT = f'{LOGIN_URL}?next={FOLLOW_INDEX_URL}'
@@ -52,13 +51,13 @@ class PostURLTests(TestCase):
             'posts:post_edit', kwargs={'post_id': cls.post.id}
         )
         cls.POST_EDIT_REDIRECT = f'{LOGIN_URL}?next={cls.POST_EDIT_URL}'
+        cls.guest = Client()
+        cls.another = Client()
+        cls.another.force_login(cls.user2)
+        cls.author = Client()
+        cls.author.force_login(cls.user)
 
     def setUp(self):
-        self.guest = Client()
-        self.another = Client()
-        self.another.force_login(self.user2)
-        self.author = Client()
-        self.author.force_login(self.user)
         cache.clear()
 
     def test_pages_urls_at_desired_location_posts_for_users(self):
@@ -77,8 +76,10 @@ class PostURLTests(TestCase):
             [FOLLOW_INDEX_URL, self.guest, 302],
             [PROFILE_FOLLOW_URL, self.another, 302],
             [PROFILE_FOLLOW_URL, self.guest, 302],
+            [PROFILE_FOLLOW_URL, self.author, 302],
             [PROFILE_UNFOLLOW_URL, self.another, 302],
             [PROFILE_UNFOLLOW_URL, self.guest, 302],
+            [PROFILE_UNFOLLOW_URL, self.author, 404],
         ]
         for url, client, code in urls_names:
             with self.subTest(url=url, client=client, code=code):
@@ -89,6 +90,12 @@ class PostURLTests(TestCase):
             [POST_CREATE_URL, self.guest, POST_CREATE_REDIRECT],
             [self.POST_EDIT_URL, self.guest, self.POST_EDIT_REDIRECT],
             [self.POST_EDIT_URL, self.another, self.POST_DETAIL_URL],
+            [FOLLOW_INDEX_URL, self.guest, FOLLOW_INDEX_URL],
+            [PROFILE_FOLLOW_URL, self.guest, PROFILE_FOLLOW_REDIRECT],
+            [PROFILE_UNFOLLOW_URL, self.guest, PROFILE_UNFOLLOW_REDIRECT],
+            [PROFILE_FOLLOW_URL, self.author, PROFILE_URL],
+            [PROFILE_FOLLOW_URL, self.another, PROFILE_URL],
+            [PROFILE_UNFOLLOW_URL, self.another, PROFILE_URL],
         ]
         for url, client, redirect in urls_redirect:
             with self.subTest(url=url, client=client, redirect=redirect):
@@ -101,7 +108,8 @@ class PostURLTests(TestCase):
             [self.POST_DETAIL_URL, self.guest, 'posts/post_detail.html'],
             [POST_CREATE_URL, self.author, 'posts/create_post.html'],
             [GROUP_LIST_URL, self.author, 'posts/group_list.html'],
-            [self.POST_EDIT_URL, self.author, 'posts/create_post.html']
+            [self.POST_EDIT_URL, self.author, 'posts/create_post.html'],
+            [FOLLOW_INDEX_URL, self.author, 'posts/follow.html'],
         ]
         for url, client, template in template_url_names:
             with self.subTest(url=url, client=client, template=template):

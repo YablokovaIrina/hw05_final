@@ -9,6 +9,7 @@ from ..models import Group, Post, Comment, User
 
 
 USERNAME = 'UserAuthor'
+NOT_AUTHOR = 'NotAuthor'
 GROUP_TITLE = 'Группа1'
 GROUP_SLUG = 'test_slug'
 GROUP_DESCRIPTION = 'Тестовая группа 1'
@@ -20,6 +21,7 @@ PROFILE_URL = reverse('posts:profile', args=[USERNAME])
 LOGIN_URL = reverse('users:login')
 POST_TEXT = 'Я все успею до жесткого дедлайна'
 POST_TEXT_NEW = 'У меня получилось сдать все работы во время!'
+POST_TEST_TEXT = 'Не автор не сможет поменять этот текст'
 REDIRECT_URL = f'{LOGIN_URL}?next={CREATE_POST_URL}'
 IMAGE = (
     b'\x47\x49\x46\x38\x39\x61\x02\x00'
@@ -31,6 +33,8 @@ IMAGE = (
 )
 IMAGE_NAME = 'small.gif'
 IMAGE_TYPE = 'image/gif'
+UPLOAD_TO = 'posts/'
+IMAGE_NAME_2 = 'sml.gif'
 
 COMMENT_TEXT = 'Текст комментария'
 COMMENT_TEXT_NEW = 'Новый текст комментария'
@@ -44,6 +48,7 @@ class PostFormTests(TestCase):
         cls.post_author = User.objects.create_user(
             username=USERNAME,
         )
+        cls.not_author = User.objects.create_user(username=NOT_AUTHOR)
         cls.group = Group.objects.create(
             title=GROUP_TITLE,
             slug=GROUP_SLUG,
@@ -54,26 +59,21 @@ class PostFormTests(TestCase):
             slug=GROUP_SLUG_NEW,
             description=GROUP_DESCRIPTION_NEW,
         )
-        cls.image = SimpleUploadedFile(
-            name=IMAGE_NAME,
-            content=IMAGE,
-            content_type=IMAGE_TYPE,
-        )
         cls.post = Post.objects.create(
             author=cls.post_author,
             text=POST_TEXT,
             group=cls.group,
-            image=cls.image,
         )
         cls.COMMENT_URL = reverse('posts:add_comment', args=[cls.post.id])
         cls.POST_DETAIL_URL = reverse('posts:post_detail', args=[cls.post.id])
         cls.POST_EDIT_URL = reverse('posts:post_edit', args=[cls.post.id])
         cls.COMMENT_REDIRECT_URL = f'{LOGIN_URL}?next={cls.COMMENT_URL}'
+        cls.guest = Client()
+        cls.author = Client()
+        cls.author.force_login(cls.post_author)
+        cls.notauthor = Client()
+        cls.notauthor.force_login(cls.not_author)
 
-    def setUp(self):
-        self.guest = Client()
-        self.author = Client()
-        self.author.force_login(self.post_author)
 
     @classmethod
     def tearDownClass(cls):
@@ -82,54 +82,66 @@ class PostFormTests(TestCase):
 
     def test_author_create_post(self):
         Post.objects.all().delete()
+        image = SimpleUploadedFile(
+            name=IMAGE_NAME,
+            content=IMAGE,
+            content_type=IMAGE_TYPE)
         form_data = {
             'text': POST_TEXT,
             'group': self.group.id,
-            'image': self.image.name
+            'image': image,
         }
         response = self.author.post(
             CREATE_POST_URL,
             data=form_data,
             follow=True
         )
-        self.assertRedirects(
-            response,
-            PROFILE_URL
-        )
-        self.assertEqual(Post.objects.count(), 1)
         post = Post.objects.get()
         self.assertEqual(post.text, form_data['text'])
         self.assertEqual(post.author, self.post_author)
         self.assertEqual(post.group.id, form_data['group'])
-        self.assertTrue(form_data['image'], post.image.name)
+        self.assertEqual(
+            post.image.name,
+            f"{UPLOAD_TO}{form_data['image']}"
+        )
+        self.assertRedirects(response, PROFILE_URL)
 
     def test_author_edit_post(self):
+        image = SimpleUploadedFile(
+            name=IMAGE_NAME_2,
+            content=IMAGE,
+            content_type=IMAGE_TYPE)
         form_data = {
             'text': POST_TEXT_NEW,
             'group': self.group2.id,
-            'image': self.image.name
+            'image': image,
         }
         response = self.author.post(
             self.POST_EDIT_URL,
             data=form_data,
             follow=True
         )
-        self.assertRedirects(
-            response,
-            self.POST_DETAIL_URL
+        post = response.context.get('post')
+        self.assertEqual(post.text, form_data['text'])
+        self.assertEqual(post.group.id, form_data['group'])
+        self.assertEqual(post.author, self.post.author)
+        self.assertEqual(
+            post.image.name,
+            f"{UPLOAD_TO}{form_data['image']}"
         )
-        self.assertEqual(response.status_code, 200)
-        post = response.context['post']
-        self.assertTrue(post.text, form_data['text'])
-        self.assertTrue(post.author, self.post.author)
-        self.assertTrue(post.group.id, form_data['group'])
-        self.assertEqual(post.image.name, 'posts/small.gif')
+        self.assertRedirects(response, self.POST_DETAIL_URL)
+
 
     def test_guest_create_post(self):
         Post.objects.all().delete()
+        image = SimpleUploadedFile(
+            name=IMAGE_NAME,
+            content=IMAGE,
+            content_type=IMAGE_TYPE)
         form_data = {
             'text': POST_TEXT,
             'group': self.group.id,
+            'image': image
         }
         response = self.guest.post(
             CREATE_POST_URL,
@@ -150,12 +162,12 @@ class PostFormTests(TestCase):
             data=form_data,
             follow=True
         )
-        self.assertRedirects(response, self.POST_DETAIL_URL)
+        self.assertEqual(Comment.objects.count(), 1)
         comment = Comment.objects.get()
         self.assertEqual(comment.text, form_data['text'])
         self.assertEqual(comment.author, self.post_author)
         self.assertEqual(comment.post, self.post)
-        self.assertEqual(Comment.objects.count(), 1)
+        self.assertRedirects(response, self.POST_DETAIL_URL)
 
     def test_guest_create_comment(self):
         Comment.objects.all().delete()
@@ -171,3 +183,27 @@ class PostFormTests(TestCase):
             response,
             self.COMMENT_REDIRECT_URL
         )
+
+    def test_not_author_edit_post(self):
+        image = SimpleUploadedFile(
+            name=IMAGE_NAME,
+            content=IMAGE,
+            content_type=IMAGE_TYPE)
+        form_data = {
+            'text': POST_TEST_TEXT,
+            'group': self.group2.id,
+            'image': image
+        }
+        clients = [self.guest, self.notauthor]
+        for client in clients:
+            with self.subTest(client=client):
+                client.post(
+                    self.POST_EDIT_URL,
+                    data=form_data,
+                    follow=True
+                )
+                edited_post = Post.objects.filter(id=self.post.id).get()
+                self.assertEqual(self.post.text, edited_post.text)
+                self.assertEqual(self.post.group, edited_post.group)
+                self.assertEqual(self.post.author, edited_post.author)
+                self.assertEqual(self.post.image, edited_post.image)

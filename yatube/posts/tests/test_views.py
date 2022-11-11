@@ -46,11 +46,11 @@ UPLOADED = SimpleUploadedFile(
 FOLLOW_URL = reverse('posts:follow_index')
 PROFILE_FOLLOW_URL = reverse(
     'posts:profile_follow',
-    kwargs={'username': USERNAME}
+    args=[USERNAME]
 )
 PROFILE_UNFOLLOW_URL = reverse(
     'posts:profile_unfollow',
-    kwargs={'username': USERNAME}
+    args=[USERNAME]
 )
 
 TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
@@ -81,15 +81,15 @@ class PostPagesTests(TestCase):
             image=UPLOADED,
         )
         cls.POST_DETAIL_URL = reverse('posts:post_detail', args=[cls.post.id])
+        cls.guest = Client()
+        cls.author = Client()
+        cls.author.force_login(cls.user)
+        cls.follow = Client()
+        cls.follow.force_login(cls.follower)
+        cls.not_follow = Client()
+        cls.not_follow.force_login(cls.follower)
 
     def setUp(self):
-        self.guest = Client()
-        self.author = Client()
-        self.author.force_login(self.user)
-        self.follow = Client()
-        self.follow.force_login(self.follower)
-        self.not_follow = Client()
-        self.not_follow.force_login(self.follower)
         cache.clear()
 
     @classmethod
@@ -110,6 +110,8 @@ class PostPagesTests(TestCase):
             INDEX_URL,
             GROUP_LIST_URL,
             PROFILE_URL,
+            self.POST_DETAIL_URL,
+            FOLLOW_URL
         ]
         for url in urls:
             with self.subTest(url=url):
@@ -164,6 +166,8 @@ class PostPagesTests(TestCase):
             GROUP_LIST_URL + SECOND_PAGE: POSTS_ON_OTHER_PAGE,
             PROFILE_URL: POSTS_ON_PAGE,
             PROFILE_URL + SECOND_PAGE: POSTS_ON_OTHER_PAGE,
+            FOLLOW_URL: POSTS_ON_PAGE,
+            FOLLOW_URL + SECOND_PAGE: POSTS_ON_OTHER_PAGE,
         }
         for page, records in pages_and_records.items():
             with self.subTest(page=page):
@@ -180,23 +184,11 @@ class PostPagesTests(TestCase):
         self.assertNotEqual(response3.content, response2.content)
 
     def test_follow(self):
-        Follow.objects.create(user=self.follower, author=self.user)
-        response = self.follow.get(
-            PROFILE_FOLLOW_URL,
-            follow=True
-        )
-        self.assertRedirects(response, PROFILE_URL)
         self.assertTrue(Follow.objects.filter(
             user=self.follower,
             author=self.user).exists())
 
     def test_unfollow(self):
-        Follow.objects.create(user=self.follower, author=self.user)
-        response = self.follow.get(
-            PROFILE_UNFOLLOW_URL,
-            follow=True
-        )
-        self.assertRedirects(response, PROFILE_URL)
         self.assertFalse(Follow.objects.filter(
             user=self.follower,
             author=self.user).exists())

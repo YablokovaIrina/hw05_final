@@ -4,7 +4,7 @@ from django.db import models
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
-
+NUM_OF_LET = 20
 
 class Group(models.Model):
     title = models.CharField(max_length=200, verbose_name='Название группы')
@@ -57,7 +57,7 @@ class Post(models.Model):
         verbose_name_plural = 'Посты'
 
     def __str__(self):
-        return self.text[:20]
+        return self.text[:NUM_OF_LET]
 
 
 class Comment(models.Model):
@@ -88,7 +88,7 @@ class Comment(models.Model):
         verbose_name_plural = 'Комментарии'
 
     def __str__(self):
-        return self.text[:20]
+        return self.text[:NUM_OF_LET]
 
 
 class Follow(models.Model):
@@ -104,10 +104,18 @@ class Follow(models.Model):
         related_name='following',
         verbose_name='Подписка',
     )
+    phrase = f'{0} подписан на {1}'.format(user, author)
 
     class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=('user', 'author'),
+                                    name='unique_follow'),
+            models.CheckConstraint(
+                check=~models.Q(user=models.F("author")),
+                name='prevent self-following')
+        ]
         verbose_name = 'Подписка'
         verbose_name_plural = 'Подписки'
 
     def __str__(self):
-        return f'{self.user.username} подписан на {self.author.username}'
+        return self.phrase
