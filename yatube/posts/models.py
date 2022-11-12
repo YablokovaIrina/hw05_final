@@ -2,7 +2,7 @@ from django.db import models
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
-CHARS = 20
+NUMBER_OF_SYMBOLS= 20
 
 
 class Group(models.Model):
@@ -57,7 +57,7 @@ class Post(models.Model):
         verbose_name_plural = 'Посты'
 
     def __str__(self):
-        return self.text[:CHARS]
+        return self.text[:NUMBER_OF_SYMBOLS]
 
 
 class Comment(models.Model):
@@ -88,7 +88,7 @@ class Comment(models.Model):
         verbose_name_plural = 'Комментарии'
 
     def __str__(self):
-        return self.text[:CHARS]
+        return self.text[:NUMBER_OF_SYMBOLS]
 
 
 class Follow(models.Model):
@@ -104,22 +104,20 @@ class Follow(models.Model):
         related_name='following',
         verbose_name='Подписка',
     )
-    PHRASE = f'{user} подписан на {author}'
+    PHRASE_RETURN = 'user подписан на author'
 
     class Meta:
         constraints = [
             models.UniqueConstraint(fields=('user', 'author'),
                                     name='unique_follow'),
             models.CheckConstraint(
-                check=~models.Q(user=models.F("author")),
+                check=~models.Q(user=models.F('author')),
                 name='prevent self-following')
         ]
         verbose_name = 'Подписка'
         verbose_name_plural = 'Подписки'
 
     def __str__(self):
-        data = (
-            self.user,
-            self.author
-        )
-        return(self.PHRASE.format(user=data, author=data))
+        user = self.user
+        author = self.author
+        return self.PHRASE_RETURN.format(user, author)

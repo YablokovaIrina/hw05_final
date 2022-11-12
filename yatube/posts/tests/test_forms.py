@@ -188,9 +188,15 @@ class PostFormTests(TestCase):
             [self.guest, self.EDIT_REDIRECT_URL],
             [self.another, self.POST_DETAIL_URL],
         ]
+        image = SimpleUploadedFile(
+            name=IMAGE_NAME_2,
+            content=IMAGE,
+            content_type=IMAGE_TYPE,
+        )
         form_data = {
             'text': POST_TEST_TEXT,
             'group': self.group2.id,
+            'image': image
         }
         for client, url in users_urls_list:
             with self.subTest(user=client, url=url):
@@ -203,4 +209,5 @@ class PostFormTests(TestCase):
                 self.assertEqual(self.post.text, post.text)
                 self.assertEqual(self.post.group, post.group)
                 self.assertEqual(self.post.author, post.author)
+                self.assertFalse(self.post.image, post.image)
                 self.assertRedirects(response, url)

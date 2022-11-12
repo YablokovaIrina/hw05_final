@@ -177,12 +177,10 @@ class PostPagesTests(TestCase):
         self.assertNotEqual(response3.content, response2.content)
 
     def test_follow(self):
-        self.follow.get(
-            PROFILE_FOLLOW_URL,
-            follow=True
-        )
-        self.assertTrue(
-            get_object_or_404(Follow, user=self.follower, author=self.user))
+        Follow.objects.create(user=self.follower, author=self.user)
+        self.follow.get(PROFILE_FOLLOW_URL)
+        follow = Follow.objects.filter(user=self.follower, author=self.user)
+        self.assertTrue(follow.exists())
 
     def test_unfollow(self):
         Follow.objects.create(user=self.follower, author=self.user)

@@ -5,11 +5,11 @@
       <li class="list-group-item">
         Дата публикации: {{ post.pub_date }} 
       </li>
-      {% if post.group.slug and not group_list %} 
+      {% if post.group %}
         <li class="list-group-item">
           <a href="{% url 'posts:group_list' post.group.slug %}">#{{ post.group }}</a>
         </li>
-      {% endif %} 
+      {% endif %}
       <li class="list-group-item">
         <a href="{% url 'posts:profile' post.author.username %}">@{{ post.author.username }}</a>
       </li>

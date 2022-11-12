@@ -3,10 +3,12 @@
   Последние обновления на сайте
 {% endblock %}
 {% block content %} 
-  {% include 'posts/includes/switcher.html' with index=True %}
-  {% for post in page_obj %}
-    {% include 'posts/includes/post.html' %}
-    {% if not forloop.last %}<hr>{% endif %}
-  {% endfor %}
-  {% include 'posts/includes/paginator.html' %}
+  <div class="container py-5">
+    {% include 'posts/includes/switcher.html' with index=True %}
+    {% for post in page_obj %}
+      {% include 'posts/includes/post.html' %}
+      {% if not forloop.last %}<hr>{% endif %}
+    {% endfor %}
+    {% include 'posts/includes/paginator.html' %}
+  </div>
 {% endblock %}
