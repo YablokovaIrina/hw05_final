@@ -47,7 +47,6 @@ class PostFormTests(TestCase):
         cls.post_author = User.objects.create_user(
             username=USERNAME,
         )
-        cls.not_author = User.objects.create_user(username=NOT_AUTHOR)
         cls.group = Group.objects.create(
             title=GROUP_TITLE,
             slug=GROUP_SLUG,
@@ -71,8 +70,6 @@ class PostFormTests(TestCase):
         cls.guest = Client()
         cls.author = Client()
         cls.author.force_login(cls.post_author)
-        cls.notauthor = Client()
-        cls.notauthor.force_login(cls.not_author)
 
     @classmethod
     def tearDownClass(cls):
@@ -151,7 +148,7 @@ class PostFormTests(TestCase):
         self.assertRedirects(response, REDIRECT_URL)
         self.assertEqual(Post.objects.count(), 0)
 
-    def test_add_comments_show_correct_context(self):
+    def test_create_comment(self):
         Comment.objects.all().delete()
         form_data = {
             'text': COMMENT_TEXT,
@@ -184,21 +181,19 @@ class PostFormTests(TestCase):
         )
 
     def test_not_author_edit_post(self):
-        urls_list = [
+        self.another_user = User.objects.create_user(username=NOT_AUTHOR)
+        self.another = Client()
+        self.another.force_login(self.another_user)
+        users_urls_list = [
             [self.guest, self.EDIT_REDIRECT_URL],
-            [self.notauthor, self.POST_DETAIL_URL],
+            [self.another, self.POST_DETAIL_URL],
         ]
-        image = SimpleUploadedFile(
-            name=IMAGE_NAME,
-            content=IMAGE,
-            content_type=IMAGE_TYPE)
         form_data = {
             'text': POST_TEST_TEXT,
             'group': self.group2.id,
-            'image': image
         }
-        for client, url in urls_list:
-            with self.subTest(url=url):
+        for client, url in users_urls_list:
+            with self.subTest(user=client, url=url):
                 response = client.post(
                     self.POST_EDIT_URL,
                     data=form_data,
@@ -208,5 +203,4 @@ class PostFormTests(TestCase):
                 self.assertEqual(self.post.text, post.text)
                 self.assertEqual(self.post.group, post.group)
                 self.assertEqual(self.post.author, post.author)
-                self.assertEqual(self.post.image, post.image)
                 self.assertRedirects(response, url)
