@@ -4,7 +4,6 @@ import tempfile
 from django.conf import settings
 from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.shortcuts import get_object_or_404
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
@@ -190,13 +189,13 @@ class PostPagesTests(TestCase):
         self.assertEqual(response2.content, response1.content)
         self.assertNotEqual(response3.content, response2.content)
 
-    def test_follow(self): 
+    def test_follow(self):
         Follow.objects.all().delete()
         self.assertTrue(Follow.objects.filter(
             user=self.follower,
             author=self.user
         ), self.follow.get(PROFILE_FOLLOW_URL))
-        
+
     def test_unfollow(self):
         self.assertFalse(Follow.objects.filter(
             user=self.follower,
