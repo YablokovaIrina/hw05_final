@@ -90,7 +90,7 @@ class PostURLTests(TestCase):
             [POST_CREATE_URL, self.guest, POST_CREATE_REDIRECT],
             [self.POST_EDIT_URL, self.guest, self.POST_EDIT_REDIRECT],
             [self.POST_EDIT_URL, self.another, self.POST_DETAIL_URL],
-            [FOLLOW_INDEX_URL, self.guest, FOLLOW_INDEX_URL],
+            [FOLLOW_INDEX_URL, self.guest, FOLLOW_REDIRECT],
             [PROFILE_FOLLOW_URL, self.guest, PROFILE_FOLLOW_REDIRECT],
             [PROFILE_UNFOLLOW_URL, self.guest, PROFILE_UNFOLLOW_REDIRECT],
             [PROFILE_FOLLOW_URL, self.author, PROFILE_URL],

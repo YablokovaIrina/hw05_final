@@ -4,6 +4,7 @@ import tempfile
 from django.conf import settings
 from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.shortcuts import get_object_or_404
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
@@ -87,7 +88,7 @@ class PostPagesTests(TestCase):
         cls.follow = Client()
         cls.follow.force_login(cls.follower)
         cls.not_follow = Client()
-        cls.not_follow.force_login(cls.follower)
+        cls.not_follow.force_login(cls.not_follower)
 
     def setUp(self):
         cache.clear()
@@ -106,18 +107,26 @@ class PostPagesTests(TestCase):
             self.assertEqual(post.image, self.post.image)
 
     def test_show_correct_contex(self):
+        Follow.objects.create(user=self.follower, author=self.user)
         urls = [
             INDEX_URL,
             GROUP_LIST_URL,
             PROFILE_URL,
             self.POST_DETAIL_URL,
-            FOLLOW_URL
+            FOLLOW_URL,
         ]
         for url in urls:
-            with self.subTest(url=url):
-                response = self.author.get(url)
+            response = self.follow.get(url)
+            if 'page_obj' not in response.context:
+                post = response.context['post']
+            else:
                 self.assertEqual(len(response.context['page_obj']), 1)
-                self.check_post_info(response.context['page_obj'][0])
+                post = response.context['page_obj'][0]
+            self.assertEqual(post.text, self.post.text)
+            self.assertEqual(post.author, self.post.author)
+            self.assertEqual(post.group.id, self.post.group.id)
+            self.assertEqual(post.id, self.post.id)
+            self.assertEqual(post.image, self.post.image)
 
     def test_groups_page_show_correct_context(self):
         group = self.author.get(GROUP_LIST_URL).context['group']
@@ -166,8 +175,6 @@ class PostPagesTests(TestCase):
             GROUP_LIST_URL + SECOND_PAGE: POSTS_ON_OTHER_PAGE,
             PROFILE_URL: POSTS_ON_PAGE,
             PROFILE_URL + SECOND_PAGE: POSTS_ON_OTHER_PAGE,
-            FOLLOW_URL: POSTS_ON_PAGE,
-            FOLLOW_URL + SECOND_PAGE: POSTS_ON_OTHER_PAGE,
         }
         for page, records in pages_and_records.items():
             with self.subTest(page=page):
@@ -183,11 +190,13 @@ class PostPagesTests(TestCase):
         self.assertEqual(response2.content, response1.content)
         self.assertNotEqual(response3.content, response2.content)
 
-    def test_follow(self):
+    def test_follow(self): 
+        Follow.objects.all().delete()
         self.assertTrue(Follow.objects.filter(
             user=self.follower,
-            author=self.user).exists())
-
+            author=self.user
+        ), self.follow.get(PROFILE_FOLLOW_URL))
+        
     def test_unfollow(self):
         self.assertFalse(Follow.objects.filter(
             user=self.follower,
