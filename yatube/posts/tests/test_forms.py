@@ -95,7 +95,7 @@ class PostFormTests(TestCase):
             data=form_data,
             follow=True
         )
-        self.assertEqual(Post.objects.count(), 1) 
+        self.assertEqual(Post.objects.count(), 1)
         post = Post.objects.get()
         self.assertEqual(post.text, form_data['text'])
         self.assertEqual(post.author, self.post_author)

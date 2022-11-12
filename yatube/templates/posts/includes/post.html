@@ -5,7 +5,7 @@
       <li class="list-group-item">
         Дата публикации: {{ post.pub_date }} 
       </li>
-      {% if post.group %} 
+      {% if post.group.slug and not group_list %} 
         <li class="list-group-item">
           <a href="{% url 'posts:group_list' post.group.slug %}">#{{ post.group }}</a>
         </li>
