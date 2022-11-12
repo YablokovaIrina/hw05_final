@@ -11,11 +11,11 @@
           </li>
           {% if post.group %}
             <li class="list-group-item">
-              Группа: <a href="{% url 'posts:group_list' post.group.slug %}"> {{ post.group }} </a>
+              <a href="{% url 'posts:group_list' post.group.slug %}"> #{{ post.group }} </a>
             </li>
           {% endif %}
           <li class="list-group-item">
-            Автор: <a href="{% url 'posts:profile' post.author.username %}"> {{ post.author.get_full_name }} </a>
+            <a href="{% url 'posts:profile' post.author.username %}"> @{{ post.author.get_full_name }} </a>
           </li>
           <li class="list-group-item d-flex justify-content-between align-items-center">
             Всего постов автора: <span> {{ post.author.posts.count }} </span> 

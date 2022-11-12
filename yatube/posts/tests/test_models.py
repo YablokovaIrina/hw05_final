@@ -1,6 +1,6 @@
 from django.test import TestCase
 
-from ..models import Group, Post, Comment, Follow, NUM_OF_LET, User
+from ..models import Group, Post, Comment, Follow, CHARS, User
 
 
 class PostModelTest(TestCase):
@@ -30,7 +30,7 @@ class PostModelTest(TestCase):
         )
 
     def test_models_have_correct_object_names(self):
-        self.assertEqual(self.post.text[:NUM_OF_LET], str(self.post))
+        self.assertEqual(self.post.text[:CHARS], str(self.post))
         self.assertEqual(self.group.title, str(self.group))
-        self.assertEqual(self.comment.text[:NUM_OF_LET], str(self.comment))
-        self.assertEqual(self.follow.phrase, str(self.follow))
+        self.assertEqual(self.comment.text[:CHARS], str(self.comment))
+        self.assertEqual(self.follow.PHRASE, str(self.follow))

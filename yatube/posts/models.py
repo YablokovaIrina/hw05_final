@@ -1,10 +1,8 @@
 from django.db import models
-
-# Create your models here.
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
-NUM_OF_LET = 20
+CHARS = 20
 
 
 class Group(models.Model):
@@ -49,7 +47,8 @@ class Post(models.Model):
     image = models.ImageField(
         'Картинка',
         upload_to='posts/',
-        blank=True
+        blank=True,
+        null=True
     )
 
     class Meta:
@@ -58,7 +57,7 @@ class Post(models.Model):
         verbose_name_plural = 'Посты'
 
     def __str__(self):
-        return self.text[:NUM_OF_LET]
+        return self.text[:CHARS]
 
 
 class Comment(models.Model):
@@ -89,7 +88,7 @@ class Comment(models.Model):
         verbose_name_plural = 'Комментарии'
 
     def __str__(self):
-        return self.text[:NUM_OF_LET]
+        return self.text[:CHARS]
 
 
 class Follow(models.Model):
@@ -105,7 +104,7 @@ class Follow(models.Model):
         related_name='following',
         verbose_name='Подписка',
     )
-    phrase = f'{0} подписан на {1}'.format(user, author)
+    PHRASE = f'{user} подписан на {author}'
 
     class Meta:
         constraints = [
@@ -119,4 +118,8 @@ class Follow(models.Model):
         verbose_name_plural = 'Подписки'
 
     def __str__(self):
-        return self.phrase
+        data = (
+            self.user,
+            self.author
+        )
+        return(self.PHRASE.format(user=data, author=data))

@@ -2,12 +2,12 @@ from django.urls import path
 
 from . import views
 
-app_name = "posts"
+app_name = 'posts'
 
 urlpatterns = [
-    path("",
+    path('',
          views.index,
-         name="index"),
+         name='index'),
     path('profile/<str:username>/',
          views.profile,
          name='profile'),

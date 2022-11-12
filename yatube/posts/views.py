@@ -72,7 +72,6 @@ def post_edit(request, post_id):
     return render(request, 'posts/create_post.html', {
         'form': form,
         'post': post,
-        'is edit': True,
     })
 
 
@@ -102,7 +101,7 @@ def follow_index(request):
 def profile_follow(request, username):
     author = get_object_or_404(User, username=username)
     if (request.user != author and not
-            Follow.objects.filter(user=request.user, author=author).exists()):
+        Follow.objects.filter(user=request.user, author=author).exists()):
         Follow.objects.create(user=request.user, author=author)
     return redirect('posts:profile', username=username)
 

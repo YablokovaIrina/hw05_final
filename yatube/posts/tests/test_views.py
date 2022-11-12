@@ -4,6 +4,7 @@ import tempfile
 from django.conf import settings
 from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.shortcuts import get_object_or_404
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
@@ -21,7 +22,6 @@ NOT_FOLLOWER = 'NotFollower'
 INDEX_URL = reverse('posts:index')
 GROUP_LIST_URL = reverse('posts:group_list', args=[GROUP_SLUG])
 PROFILE_URL = reverse('posts:profile', args=[USERNAME])
-POSTS_ON_OTHER_PAGE = 3
 SECOND_PAGE = '?page=2'
 
 GROUP_TITLE_OTHER = 'Другая группа'
@@ -97,14 +97,6 @@ class PostPagesTests(TestCase):
         super().tearDownClass()
         shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
 
-    def check_post_info(self, post):
-        with self.subTest(post=post):
-            self.assertEqual(post.text, self.post.text)
-            self.assertEqual(post.author, self.post.author)
-            self.assertEqual(post.group.id, self.post.group.id)
-            self.assertEqual(post.id, self.post.id)
-            self.assertEqual(post.image, self.post.image)
-
     def test_show_correct_contex(self):
         Follow.objects.create(user=self.follower, author=self.user)
         urls = [
@@ -140,12 +132,6 @@ class PostPagesTests(TestCase):
         )
         self.assertEqual(response.context['author'], self.user)
 
-    def test_detail_page_show_correct_context(self):
-        response = self.author.get(
-            self.POST_DETAIL_URL
-        )
-        self.check_post_info(response.context['post'])
-
     def test_post_is_not_in_group_and_feed(self):
         urls = [
             FOLLOW_URL,
@@ -157,6 +143,7 @@ class PostPagesTests(TestCase):
                 self.assertNotIn(self.post, response.context['page_obj'])
 
     def test_paginator_on_pages(self):
+        POSTS_ON_OTHER_PAGE = 3
         Post.objects.all().delete()
         Post.objects.bulk_create(
             Post(
@@ -190,13 +177,15 @@ class PostPagesTests(TestCase):
         self.assertNotEqual(response3.content, response2.content)
 
     def test_follow(self):
-        Follow.objects.all().delete()
-        self.assertTrue(Follow.objects.filter(
-            user=self.follower,
-            author=self.user
-        ), self.follow.get(PROFILE_FOLLOW_URL))
+        self.follow.get(
+            PROFILE_FOLLOW_URL,
+            follow=True
+        )
+        self.assertTrue(
+            get_object_or_404(Follow, user=self.follower, author=self.user))
 
     def test_unfollow(self):
-        self.assertFalse(Follow.objects.filter(
-            user=self.follower,
-            author=self.user).exists())
+        Follow.objects.create(user=self.follower, author=self.user)
+        self.follow.get(PROFILE_UNFOLLOW_URL)
+        follow = Follow.objects.filter(user=self.follower, author=self.user)
+        self.assertFalse(follow.exists())
