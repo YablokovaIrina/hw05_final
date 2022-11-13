@@ -104,7 +104,7 @@ class Follow(models.Model):
         related_name='following',
         verbose_name='Подписка',
     )
-    PHRASE_RETURN = 'user подписан на author'
+    PHRASE_RETURN = '{key_user} подписан на {key_author}'
 
     class Meta:
         constraints = [
@@ -118,6 +118,5 @@ class Follow(models.Model):
         verbose_name_plural = 'Подписки'
 
     def __str__(self):
-        user = self.user
-        author = self.author
-        return self.PHRASE_RETURN.format(user, author)
+        return self.PHRASE_RETURN.format(key_user=self.user.username,
+                                         key_author=self.author.username)

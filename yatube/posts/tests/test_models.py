@@ -34,4 +34,7 @@ class PostModelTest(TestCase):
         self.assertEqual(self.group.title, str(self.group))
         self.assertEqual(self.comment.text[:NUMBER_OF_SYMBOLS],
                          str(self.comment))
-        self.assertEqual(self.follow.PHRASE_RETURN, str(self.follow))
+        self.assertEqual(
+            self.follow.PHRASE_RETURN.format(key_user=self.user2,
+                                             key_author=self.user),
+            str(self.follow))
